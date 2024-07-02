@@ -1,0 +1,6 @@
+@ChatGPTAPI_HostAddress = http://localhost:5003
+
+GET {{ChatGPTAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
