@@ -1,0 +1,59 @@
+Here's the simplest way to configure volume name, mount path, PVC name, and GID in a Helm chart:
+
+### 1. Minimal `values.yaml`:
+```yaml
+volume:
+  name: mydata              # Volume name (used in pod)
+  mountPath: /app/data      # Container mount path
+  pvcName: myapp-pvc        # PVC name
+  gid: 1000                 # Group ID for permissions
+```
+
+### 2. Basic PVC (`templates/pvc.yaml`):
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.volume.pvcName }}
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+```
+
+### 3. Deployment (`templates/deployment.yaml`):
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  template:
+    spec:
+      securityContext:
+        fsGroup: {{ .Values.volume.gid }}  # Applies GID to volume
+      containers:
+        - volumeMounts:
+            - name: {{ .Values.volume.name }}
+              mountPath: {{ .Values.volume.mountPath }}
+      volumes:
+        - name: {{ .Values.volume.name }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.volume.pvcName }}
+```
+
+### Key Points:
+1. **Volume Name**: Used to reference the volume in the pod
+2. **Mount Path**: Where the volume appears in your container
+3. **PVC Name**: Name of the persistent volume claim
+4. **GID**: Group ID set via `fsGroup` for file permissions
+
+### Usage Example:
+```bash
+helm install myapp . \
+  --set volume.name=app-storage \
+  --set volume.mountPath=/data \
+  --set volume.pvcName=app-pvc-1 \
+  --set volume.gid=2000
+```
+
+This is the most straightforward implementation while keeping all your required elements.
